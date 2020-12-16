@@ -1,5 +1,9 @@
-const { Router } = require('express');
+const authRoutes = require('./authRoutes');
+const expAutoSan = require('express-autosanitizer');
 
 exports.routes = (app) => {
-    app.get('/', (req,res) => res.send('Home Page'));
+    app.use(expAutoSan.allUnsafe)
+    app.get('/', (req,res) => res.render('welcome'));
+    app.use(authRoutes);
+    // app.use('/user', userRoutes);
 }
