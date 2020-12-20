@@ -51,7 +51,7 @@
   overflow-y: scroll;
   flex-basis: 400px;
   scroll-snap-type: y proximity;
-  background-color: rgb(31 29 29);
+  /* background-color: rgb(31 29 29); */
 }
 
 #chat-window > div:last-child {

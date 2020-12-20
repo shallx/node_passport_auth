@@ -3,8 +3,8 @@
 <div class="container">
   <div class="row mt-3">
     <div class="col-lg-9 p-0" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)">
-      <video controls class="w-100">
-        <source src="some_video.mp4" type="video/mp4" />
+      <video controls class="w-100" id="video_player">
+        <source src="/video_link" type="video/mp4" />
         Sorry, your browser doesn't support embedded videos.
       </video>
     </div>
@@ -50,6 +50,8 @@
     var chats = $('#chat-window');
     var socket = io();
     var lastSenderName = '';
+    var vid = document.getElementById("video_player");
+
     socket.on("connect", () => {
       socket.emit('join');
       console.log("Connected to the server");
@@ -80,6 +82,14 @@
         </div>`);
         });
       }
+    })
+
+    socket.on('let_me_catch_up', (currentTime) => {
+      vid.currentTime = currentTime;
+    });
+
+    socket.on('where_is_everyone', (socket_id) => {
+      socket.emit('there_they_are', {currentTime:vid.currentTime, socket_id: socket_id});
     })
 
     socket.on("message", data => {
@@ -146,7 +156,53 @@
       if (e.keyCode == 13) {
         $.fn.sendMessage();
       }
-    })
+    });
+
+    // Video Management socket
+
+    
+    var isPlaying = true;
+
+    vid.onplaying = function () {
+      isPlaying = true;
+    };
+    vid.onplay = function () {
+      // console.log("Play");
+      socket.emit("play", { play_at: vid.currentTime });
+    };
+    vid.onpause = function () {
+      // console.log("Paused");
+      isPlaying = false;
+      socket.emit("paused", { paused_at: vid.currentTime });
+    };
+    // vid.onseeked = function () {
+    //   console.log("Seeked");
+    //   socket.emit("seeked", { seeked_at: vid.currentTime });
+    // };
+    socket.on("connect", () => {
+      console.log("Connected to the server");
+    });
+    socket.on("disconnect", () => {
+      console.log("Connected to the server");
+    });
+
+    socket.on("paused", async msg => {
+      vid.currentTime = msg.paused_at;
+      if (!vid.paused && isPlaying) {
+        vid.pause();
+      }
+      // await vid.pause();
+      console.log("Msg Recieved front Server " + msg.paused_at);
+    });
+
+    socket.on("play", async msg => {
+      vid.currentTime = msg.play_at;
+      if (vid.paused && !isPlaying) {
+        vid.play();
+      }
+      // await vid.play();
+      console.log("Msg Recieved front Server " + msg.paused_at);
+    });
 
   })
 </script>

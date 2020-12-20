@@ -52,7 +52,7 @@ app.use(express.urlencoded({ extended: false }));
 //   })
 // );
 app.use(cookieSession({
-  maxAge: 24 * 60 * 1000,
+  maxAge: 3* 60 * 60 * 1000,
   keys: [process.env.COOKIE_KEY],
 }));
 
@@ -116,35 +116,58 @@ io.on("connection", async(socket) => {
   socket.on("join", async() => {
     console.log("User connected: " + socket.id);
     socket.join('watchparty');
-    if(connected_user){
-      var checkIfAllreadyExist = await Chat.findOne({sender_id: connected_user._id});
-      //Connecting User and putting on the data;
-      if(checkIfAllreadyExist == null) {
-        console.log("Connected User name: " + connected_user.name);
-        let data = {};
-        data.initials = initials(connected_user.name);
-        data.firstName = firstName(connected_user.name);
-        socket.to('watchparty').emit('newconnection', data);
-        var result = await Chat.create({
-          name: connected_user.name,
-          sender_id: connected_user,
-          socket_id: socket.id,
-          room_id: 'watchparty',
-        });
-        // console.log(result);
-      } else {
-        if(checkIfAllreadyExist.socket_id != socket.id){
-          checkIfAllreadyExist.socket_id = socket.id;
-          await checkIfAllreadyExist.save();
+    try{
+      if(connected_user){
+        let first_boy = await Chat.findOne({sender_id : { $ne: connected_user._id}});
+        if(first_boy){
+          io.to(first_boy.socket_id).emit('where_is_everyone', socket.id);
+        }
+  
+        var checkIfAllreadyExist = await Chat.findOne({sender_id: connected_user._id});
+        //Connecting User and putting on the data;
+        if(checkIfAllreadyExist == null) {
+          console.log("Connected User name: " + connected_user.name);
+          let data = {};
+          data.initials = initials(connected_user.name);
+          data.firstName = firstName(connected_user.name);
+          socket.to('watchparty').emit('newconnection', data);
+          var result = await Chat.create({
+            name: connected_user.name,
+            sender_id: connected_user,
+            socket_id: socket.id,
+            room_id: 'watchparty',
+          });
+          // console.log(result);
+        } else {
+          if(checkIfAllreadyExist.socket_id != socket.id){
+            checkIfAllreadyExist.socket_id = socket.id;
+            await checkIfAllreadyExist.save();
+          }
         }
       }
+    } catch(error){
+      console.log(error);
     }
+
+  });
+
+  socket.on('there_they_are', (data) => {
+    io.to(data.socket_id).emit('let_me_catch_up', data.currentTime);
   })
 
   socket.on("leave", async () => {
     let chat = await Chat.deleteOne({sender_id: connected_user.id});
     console.log(connected_user.name + " Left the room");
   })
+  // VIdeo player socket
 
-  // Connect to a room and an id, update the database
+  socket.on("paused", msg => {
+    socket.to('watchparty').broadcast.emit("paused", { paused_at: msg.paused_at });
+  });
+  socket.on("play", msg => {
+    socket.to('watchparty').broadcast.emit("play", { play_at: msg.play_at });
+  });
+  socket.on("seeked", msg => {
+    socket.to('watchparty').broadcast.emit("seeked", { seeked_at: msg.seeked_at });
+  });
 });
