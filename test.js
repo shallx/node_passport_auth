@@ -13,13 +13,20 @@
 
 // });
 
-function main() {
-  try {
-    throw { code: 900};
-  } catch (error) {
-    // console.error(error);
-    console.log(error);
-  }
+// function main() {
+//   var s = "Rafat Rashid Rahi";
+//   var initials = arr.splice(0,2).map(name => name[0]).join('');
+
+//   console.log(initials);
+// }
+
+function initials(s){
+  return s.split(' ').splice(0,2).map(name => name[0]).join('');
 }
 
-main();
+function firstName(s){
+  return s.split(' ')[0];
+}
+
+// main();
+console.log(firstName("Rafat Rashid Rahi"));

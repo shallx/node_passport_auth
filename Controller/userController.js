@@ -4,17 +4,20 @@ const bcrypt = require("bcryptjs");
 const flash = require("connect-flash");
 const session = require("express-session");
 const chalk = require("chalk");
+const passport = require('passport');
 
 exports.getLogin = (req, res, next) => {
-  res.render("login");
+  res.render('login', { layout: 'layouts/auth_layout'});
 };
 
 exports.getRegister = (req, res, next) => {
-  res.render("register");
+  res.render('register', { layout: 'layouts/auth_layout'});
 };
 
 exports.getLogout = (req, res, next) => {
-  res.render("logout");
+  req.logout();
+  req.flash('success_msg', 'You are logged out');
+  res.redirect('/login');
 };
 
 exports.postRegister = async (req, res, next) => {
@@ -35,12 +38,12 @@ exports.postRegister = async (req, res, next) => {
         });
       })
       .then(user => {
-        return res.json(user);
+        req.flash('success_msg', 'You are now registered and can log in');
+        // return res.json(user);
+        res.redirect('/login');
       })
       .catch(err => {
         err = errorHandler.handleErrors(err);
-        console.log("Its on TOP");
-        console.log(err);
         
         return res.render("register", {
           errors: err,
@@ -51,14 +54,20 @@ exports.postRegister = async (req, res, next) => {
   } catch (error) {
     // console.log(error);
     let err = errorHandler.handleErrors(error);
-    console.log("Its on BOTTOM");
-    console.log(err);
 
     // console.log(err);
     res.render("register", {
       errors: err,
       name,
       email,
-    });
+    })(req,res,next);
   }
 };
+
+exports.postLogin = (req, res, next) => {
+  passport.authenticate('local', {
+    successRedirect: '/dashboard',
+    failureRedirect: '/login',
+    failureFlash: true
+  })(req,res,next);
+}

@@ -1,0 +1,152 @@
+<link rel="stylesheet" href="css/custom.css">
+
+<div class="container">
+  <div class="row mt-3">
+    <div class="col-lg-9 p-0" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)">
+      <video controls class="w-100">
+        <source src="some_video.mp4" type="video/mp4" />
+        Sorry, your browser doesn't support embedded videos.
+      </video>
+    </div>
+    <div id="chat-section" class="col-lg-3 mx-auto d-flex flex-column p-0">
+      <div class="d-flex justify-content-between py-2" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)">
+        <button class="btn"><i class="fas fa-ellipsis-v"></i></button>
+        <h5 class="align-self-center"><strong>Chat Head</strong></h5>
+        <button class="btn"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="d-flex py-2 pl-3">
+        <div class="text-success mr-3">Online:</div>
+        <div class="d-flex" id="online_users">
+          <% users.forEach(user => { %>
+          <div class="p-1 rounded-circle bg-success text-center mr-1" style="height: 35px; width: 35px">
+            <%= user %>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+      <div id="chat-window" class="flex-grow-1">
+      </div>
+      <div class="d-flex align-items-stretch py-1">
+        <a class="p-2 text-center">
+          <i class="fas fa-grin-alt text-success"></i>
+        </a>
+        <div style="flex-grow: 20;">
+          <input type="text" class="form-control" id="input_message">
+        </div>
+        <a id="submit" href="" type="button" class="p-2 text-center" style="flex-grow: 1;"><i
+            class="fa fa-paper-plane"></i></a>
+      </div>
+    </div>
+  </div>
+  <h5 class='text-center mt-3'>Logged in User: <%= username %></h5>
+  <div id="name_hidden" style="visibility: hidden"><%= username %></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  $(document).ready(function() {
+    var users = "<%= users %>";
+    users = users.split(',');
+    var chats = $('#chat-window');
+    var socket = io();
+    var lastSenderName = '';
+    socket.on("connect", () => {
+      socket.emit('join');
+      console.log("Connected to the server");
+    });
+
+    socket.on("newconnection", (user) => {
+      var online_users = $('#online_users');
+      if(users.findIndex(u => u == user.initials) == -1) {
+        online_users.append(`<div class="p-1 rounded-circle bg-success text-center mr-1" style="height: 35px; width: 35px">
+            ${user.initials}
+          </div>`);
+          users.push(user.initials);
+        }
+        chats.append(`<small class="text-success m-3 d-block">${user.firstName} Joined The chat</small>`);
+    });
+
+    socket.on("user_disconnected", (data) => {
+      let online_users = $('#online_users');
+      chats.append(`<small class="text-danger m-3 d-block">${data.firstName} Left the chat</small>`)
+      if(users.findIndex(u => u == data.initials) != -1){
+        // console.log(users);
+        users = users.filter(u => u != data.initials);
+        // console.log(users);
+        online_users.html('');
+        users.forEach(u => {
+          online_users.append(`<div class="p-1 rounded-circle bg-success text-center mr-1" style="height: 35px; width: 35px">
+          ${u}
+        </div>`);
+        });
+      }
+    })
+
+    socket.on("message", data => {
+      if(lastSenderName == data.name){
+        chats.append(`<div><div class="user-msg border border-primary rounded-bubble p-2 bg-info mb-1 d-inline-block" style="margin-left:60px">
+        ${data.message}
+      </div></div>`);
+      }
+      else{
+        chats.append(`<div id="single-chat" class="d-flex px-3 align-items-start mb-2">
+          <div id="user-logo" class="rounded-circle bg-danger p-1 mt-2" style="height: 75; width: 70">
+            Shit
+          </div>
+          <div class="pl-2">
+            <small id="user-name" class="ml-1">${data.name}</small>
+            <div class="user-msg border border-primary rounded-bubble p-2 bg-info mb-1">
+              ${data.message}
+            </div>
+          </div>
+        </div>`);
+      }
+      lastSenderName = data.name;
+
+    })
+
+    $.fn.sendMessage = function(){
+      var input = $('#input_message');
+      var name = $('#name_hidden').text();
+      if(lastSenderName == name){
+        chats.append(`<div class="d-flex justify-content-end">
+        <div class="user-msg border border-primary rounded-bubble p-2 bg-info mb-1 d-inline-block" style="margin-right:58px">
+          ${input.val()}
+        </div>
+      </div>`);
+      } else {
+        chats.append(`<div id="single-chat" class="d-flex px-3 align-items-start justify-content-end mb-2">
+          <div class="pr-2  d-flex flex-column align-items-end">
+            <small id="user-name" class="mr-1">${name}</small>
+            <div class="user-msg border border-primary rounded-bubble p-2 bg-info mb-1">
+              ${input.val()}
+            </div>
+          </div>
+          <div id="user-logo" class="rounded-circle bg-danger p-1 mt-2" style="height: 35px; width: 35px">
+            Shit
+          </div>
+        </div>`)
+      }
+      
+      socket.emit("message", {
+        name: name,
+        sender_id: "ID",
+        message: input.val()
+      });
+      lastSenderName = name;
+      input.val('');
+    }
+
+    $("#submit").on("click",(e) => {
+      e.preventDefault();
+      $.fn.sendMessage();
+    });
+    $('#input_message').keyup((e) => {
+      e.preventDefault();
+      if (e.keyCode == 13) {
+        $.fn.sendMessage();
+      }
+    })
+
+  })
+</script>

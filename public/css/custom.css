@@ -1,0 +1,62 @@
+@media (min-width: 1300px) {
+  .container {
+    max-width: 1200px;
+  }
+}
+@media (min-width: 1500px) {
+  .container {
+    max-width: 1300px;
+  }
+}
+@media (min-width: 1700px) {
+  .container {
+    max-width: 1500px;
+  }
+}
+@media (min-width: 1800px) {
+  .container {
+    max-width: 1500px;
+  }
+}
+@media (min-width: 1900px) {
+  .container {
+    max-width: 1600px;
+  }
+}
+/* width */
+::-webkit-scrollbar {
+  box-sizing: border-box;
+  width: 15px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #202020;
+  padding: 9px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #0f0f0f;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+.rounded-bubble {
+  border-radius: 15px;
+}
+#chat-window {
+  overflow-y: scroll;
+  flex-basis: 400px;
+  scroll-snap-type: y proximity;
+  background-color: rgb(31 29 29);
+}
+
+#chat-window > div:last-child {
+  scroll-snap-align: end;
+}
+#chat-section {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
