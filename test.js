@@ -30,3 +30,6 @@ function firstName(s){
 
 // main();
 console.log(firstName("Rafat Rashid Rahi"));
+
+
+// "/1/2/4/6/"

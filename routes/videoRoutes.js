@@ -1,5 +1,6 @@
 const express = require("express");
 const Router = express.Router();
+const videoController = require('../Controller/videoController');
 const Chat = require('../Model/Chat');
 const {ensureAuthenticated} = require('../config/auth');
 const {initials, firstName} = require('../libs/string');
@@ -14,20 +15,28 @@ Router.get('/video', ensureAuthenticated, async(req,res,next) => {
   if(users.findIndex(user => user == initials(req.user.name)) == -1) {
       users.push(initials(req.user.name));
   }
-  // try {
-  //   let socket_id = await Chat.findOne().select('socket_id');
-  //   console.log("Hello I am Chandler");
-  //   if(socket_id != null) {
-  //     io.getIO().to('watchparty').emit('')
-  //   }
-  // } catch (error) {
-  //   console.log(error);
-  // }
   res.render('video', {username, users, extractStyles: true});
 })
 
-Router.get("/video_link", function (req, res) {
-  const path = "assets/conjuring.mp4";
+Router.get('/video/:link', ensureAuthenticated, async(req, res, next) => {
+  const video_link = req.params.link;
+  let connected_users = await Chat.find({room_id: "watchparty"});
+  let users = connected_users.map(user =>initials(user.name));
+  let username = firstName(req.user.name);
+  if(users.findIndex(user => user == initials(req.user.name)) == -1) {
+      users.push(initials(req.user.name));
+  }
+  console.log(video_link.replace(/-/g, '/'));
+  // console.log(video_link);
+  res.render('video', {username, users, video_link, extractStyles: true});
+})
+
+Router.get("/watch/:link", function (req, res) {
+  let params = req.params.link;
+  link = params.replace(/-/g, '/');
+  // const path = "assets/conjuring.mp4";
+  const path = "assets/" + link;
+  // console.log(link);
   const stat = fs.statSync(path);
   const fileSize = stat.size;
   const range = req.headers.range;
@@ -68,5 +77,9 @@ Router.get("/video_link", function (req, res) {
     fs.createReadStream(path).pipe(res);
   }
 });
+
+Router.get('/categories', videoController.getCategories);
+Router.get(/^\/categories(\/\d\d?){1,6}\/?$/, videoController.getCategoriesChildren);
+
 
 module.exports = Router;

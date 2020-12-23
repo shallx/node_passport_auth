@@ -1,0 +1,37 @@
+<style>
+  html {
+    font-family: "Ubuntu","Roboto","Helvetica","Arial","sans-serif"!important;
+  }
+  .list-group-item > img {
+    margin-right: 1rem;
+    height: 20px;
+  }
+  .list-group-item {
+    font-size: 1rem;
+    color: white
+  }
+  
+</style>
+
+<div class="container">
+  <div class="mt-5">
+    <div class="list-group col-md-8 mx-auto">
+      <!-- <div class="list-group-item">Root <i class="fas fa-angle-right"></i> English Movies <i class="fas fa-angle-right"></i> Marvel</div> -->
+      <div class="list-group-item">
+        <a href="/categories/">Root </a>
+        <% if(typeof navigation != 'undefined'){ %>
+          <% navigation.forEach((nav, index) =>{ %> 
+            <i class="fas fa-angle-right"></i><a href="/categories/<%= nav.path %>"> <%= nav.slug %></a>
+        <% })} %> 
+      </div>
+      <% categories.forEach((category, index) => { %>
+        <a href="<%= category.path %>" class="list-group-item list-group-item-action"><img src="<%= category.image %>" alt="folder"><%= category.name %></a>
+    <% }) %>
+    </div>
+  </div>
+
+</div>
+
+<!-- <script>
+
+</script> -->
