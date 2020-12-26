@@ -72,13 +72,18 @@ exports.getCategoriesChildren = (req,res,next) => {
 exports.getWatchPage = async(req, res, next) => {
   try {
     const video_link = req.params.link;
+
+    // Getting subtitle
+    let sub_link = video_link.replace(/-/g, '/');
+    sub_link ='/subtitles/' + sub_link.split('.')[0].split('/').pop() + '.vtt';
+    console.log('Subtitle_link: '+ sub_link);
     let connected_users = await Chat.find({room_id: "watchparty"});
     let users = connected_users.map(user =>initials(user.name));
     let username = firstName(req.user.name);
     if(users.findIndex(user => user == initials(req.user.name)) == -1) {
         users.push(initials(req.user.name));
     }
-    res.render('video', {username, users, video_link, extractStyles: true});
+    res.render('video', {username, users, video_link, sub_link, extractStyles: true});
 
   } catch (error) {
     errorHandler.throwErrorc(error, next);
@@ -92,7 +97,7 @@ exports.videoSource = (req, res) => {
   const stat = fs.statSync(path);
   const fileSize = stat.size;
   const range = req.headers.range;
-
+  const extension = link.split('.').pop();
   if (range) {
     io.getIO().emit("range", {
       action: "create",
@@ -115,7 +120,7 @@ exports.videoSource = (req, res) => {
       "Content-Range": `bytes ${start}-${end}/${fileSize}`,
       "Accept-Ranges": "bytes",
       "Content-Length": chunksize,
-      "Content-Type": "video/mp4",
+      "Content-Type": "video/" + extension,
     };
 
     res.writeHead(206, head);
@@ -123,7 +128,7 @@ exports.videoSource = (req, res) => {
   } else {
     const head = {
       "Content-Length": fileSize,
-      "Content-Type": "video/mp4",
+      "Content-Type": "video/" + extension,
     };
     res.writeHead(200, head);
     fs.createReadStream(path).pipe(res);
