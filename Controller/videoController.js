@@ -76,7 +76,7 @@ exports.getWatchPage = async(req, res, next) => {
     // Getting subtitle
     let sub_link = video_link.replace(/-/g, '/');
     sub_link ='/subtitles/' + sub_link.split('.')[0].split('/').pop() + '.vtt';
-    console.log('Subtitle_link: '+ sub_link);
+    // console.log('Subtitle_link: '+ sub_link);
     let connected_users = await Chat.find({room_id: "watchparty"});
     let users = connected_users.map(user =>initials(user.name));
     let username = firstName(req.user.name);

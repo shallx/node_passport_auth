@@ -162,10 +162,11 @@ io.on("connection", async(socket) => {
   // VIdeo player socket
 
   socket.on("paused", msg => {
-    socket.to('watchparty').broadcast.emit("paused", { paused_at: msg.paused_at });
+    console.log('Sender name:'+ msg.sender_name);
+    socket.to('watchparty').broadcast.emit("paused", { paused_at: msg.paused_at, sender_name: msg.sender_name });
   });
   socket.on("play", msg => {
-    socket.to('watchparty').broadcast.emit("play", { play_at: msg.play_at });
+    socket.to('watchparty').broadcast.emit("play", { play_at: msg.play_at, sender_name: msg.sender_name});
   });
   socket.on("seeked", msg => {
     socket.to('watchparty').broadcast.emit("seeked", { seeked_at: msg.seeked_at });

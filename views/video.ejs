@@ -2,7 +2,12 @@
 
 <div class="container">
   <div class="row mt-3">
-    <div class="col-lg-9 p-0" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)">
+    <div class="col-lg-9 p-0" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)" id="vid_container">
+      <div id="vid_message">
+      </div>
+      <div class="btn-fs" id="btnFS">
+        Fullscreen toggle
+      </div>
       <video controls class="w-100" id="video_player">
         <source src="/watch/<%= video_link %>" type="video/mp4" />
           <track
@@ -53,6 +58,8 @@
   
 </div>
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+<script src="/js/video_fullscreen.js">
+</script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
   $(document).ready(function() {
@@ -62,6 +69,10 @@
     var socket = io();
     var lastSenderName = '';
     var vid = document.getElementById("video_player");
+    var iJustPaused = false;
+    var iJustPlayed = false;
+    var isBeingPlayedBy = '';
+    var isBeingPausedBy = '';
 
     socket.on("connect", () => {
       socket.emit('join');
@@ -104,15 +115,19 @@
     })
 
     socket.on("message", data => {
-      if(lastSenderName == data.name){
+      if(data.message == 'nai'){
+        chats.text('');
+        lastSenderName = '';
+      }
+      else if(lastSenderName == data.name){
         chats.append(`<div><div class="user-msg border border-primary rounded-bubble p-2 bg-info mb-1 d-inline-block" style="margin-left:60px">
         ${data.message}
       </div></div>`);
       }
       else{
         chats.append(`<div id="single-chat" class="d-flex px-3 align-items-start mb-2">
-          <div id="user-logo" class="rounded-circle bg-danger p-1 mt-2" style="height: 75; width: 70">
-            Shit
+          <div id="user-logo" class="text-center rounded-circle bg-danger p-1 mt-2" style="height: 35px; width: 35px">
+            ${data.name[0]}
           </div>
           <div class="pl-2">
             <small id="user-name" class="ml-1">${data.name}</small>
@@ -123,13 +138,16 @@
         </div>`);
       }
       lastSenderName = data.name;
-
     })
 
     $.fn.sendMessage = function(){
       var input = $('#input_message');
       var name = $('#name_hidden').text();
-      if(lastSenderName == name){
+      if(input.val() == 'nai'){
+        chats.text('');
+        lastSenderName = '';
+      }
+      else if(lastSenderName == name){
         chats.append(`<div class="d-flex justify-content-end">
         <div class="user-msg border border-primary rounded-bubble p-2 bg-info mb-1 d-inline-block" style="margin-right:58px">
           ${input.val()}
@@ -143,8 +161,8 @@
               ${input.val()}
             </div>
           </div>
-          <div id="user-logo" class="rounded-circle bg-danger p-1 mt-2" style="height: 35px; width: 35px">
-            Shit
+          <div id="user-logo" class="text-center rounded-circle bg-danger p-1 mt-2" style="height: 35px; width: 35px">
+            ${name[0]}
           </div>
         </div>`)
       }
@@ -171,19 +189,25 @@
 
     // Video Management socket
     
-    var isPlaying = true;
+    var isPlaying = false;
 
     vid.onplaying = function () {
       isPlaying = true;
     };
     vid.onplay = function () {
-      // console.log("Play");
-      socket.emit("play", { play_at: vid.currentTime });
+      if(!iJustPlayed){
+        var name = $('#name_hidden').text();
+        socket.emit("play", { play_at: vid.currentTime, sender_name: name });
+      }
+      iJustPlayed = false;
     };
     vid.onpause = function () {
-      // console.log("Paused");
-      isPlaying = false;
-      socket.emit("paused", { paused_at: vid.currentTime });
+      if(isPlaying && !iJustPaused){
+        var name = $('#name_hidden').text();
+        socket.emit("paused", { paused_at: vid.currentTime, sender_name:name });
+        isPlaying = false;
+      }
+      iJustPaused = false;
     };
     // vid.onseeked = function () {
     //   console.log("Seeked");
@@ -197,21 +221,49 @@
     });
 
     socket.on("paused", async msg => {
+
       vid.currentTime = msg.paused_at;
       if (!vid.paused && isPlaying) {
+        iJustPaused = true;
         vid.pause();
       }
-      // await vid.pause();
-      console.log("Msg Recieved front Server " + msg.paused_at);
+
+      //Paused by information
+      if(msg.sender_name != isBeingPausedBy){
+        isBeingPausedBy = msg.sender_name;
+        isBeingPlayedBy = '';
+        $('#vid_message').html('');
+        disposable_message(msg.sender_name, 'warning');
+        setTimeout(function(){
+          $('#vid_message').html('');
+          isBeingPlayedBy = '';
+          isBeingPausedBy = '';
+        }, 10000);
+      }
+    
     });
 
     socket.on("play", async msg => {
       vid.currentTime = msg.play_at;
-      if (vid.paused && !isPlaying) {
+      if (vid.paused) {
         vid.play();
+
+        if(msg.sender_name != isBeingPlayedBy){
+          isBeingPlayedBy = msg.sender_name;
+          isBeingPausedBy = '';
+          $('#vid_message').html('');
+          disposable_message(msg.sender_name, 'success');
+          setTimeout(function(){
+            $('#vid_message').html('');
+            isBeingPlayedBy = '';
+            isBeingPausedBy = '';
+          }, 10000);
+        }
+        iJustPlayed = true;
       }
-      // await vid.play();
-      console.log("Msg Recieved front Server " + msg.paused_at);
+      else {
+        iJustPlayed = false;
+      }
     });
 
     //Emoji Picker
@@ -229,4 +281,20 @@
       emoji_picker.toggle();
     })
   })
+
+  function disposable_message(name, alert_type){
+    let disposable_container = $('#vid_message');
+    disposable_container.append(`<div class="alert alert-${alert_type} alert-dismissible fade show" role="alert">
+      <strong>${name}</strong> is Controlling now!!!
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>`);
+    // auto_dispose(disposable_container);
+    // setTimeout(function(){
+    //   $('#vid_message').html('');
+    //   isBeingPlayedBy = '';
+    //   isBeingPausedBy = '';
+    // }, 10000);
+  }
 </script>
