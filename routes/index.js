@@ -9,8 +9,11 @@ const videoRoutes = require('./videoRoutes');
 exports.routes = (app) => {
     app.use(expAutoSan.allUnsafe);
     app.set('layout', 'layouts/layout');
-    app.get('/', (req,res) => res.render('welcome'));
-    app.get('/welcome', (req,res,next) => res.render('welcome'));
+    app.get('/',ensureAuthenticated, (req,res) => {
+        res.render('dashboard', {
+            name: req.user.name
+        })
+    });
     app.get('/dashboard', ensureAuthenticated, (req,res) => {
         res.render('dashboard', {
             name: req.user.name

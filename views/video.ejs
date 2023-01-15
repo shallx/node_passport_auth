@@ -1,27 +1,31 @@
-<link rel="stylesheet" href="/css/custom.css">
+<link rel="stylesheet" href="/css/custom.css" />
 
 <div class="container">
   <div class="row mt-3">
-    <div class="col-lg-9 p-0" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)" id="vid_container">
-      <div id="vid_message">
-      </div>
-      <div class="btn-fs" id="btnFS">
-        Fullscreen toggle
-      </div>
+    <div
+      class="col-lg-9 p-0"
+      style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)"
+      id="vid_container"
+    >
+      <div id="vid_message"></div>
+      <!-- <div class="btn-fs" id="btnFS">Fullscreen toggle</div> -->
       <video controls class="w-100" id="video_player">
         <source src="/watch/<%= video_link %>" type="video/mp4" />
-          <track
-        label="English"
-        kind="subtitles"
-        srclang="en"
-        src="<%= sub_link %>"
-        default
-      />
+        <track
+          label="English"
+          kind="subtitles"
+          srclang="en"
+          src="<%= sub_link %>"
+          default
+        />
         Sorry, your browser doesn't support embedded videos.
       </video>
     </div>
     <div id="chat-section" class="col-lg-3 mx-auto d-flex flex-column p-0">
-      <div class="d-flex justify-content-between py-2" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)">
+      <div
+        class="d-flex justify-content-between py-2"
+        style="border-bottom: 1px solid rgba(255, 255, 255, 0.25)"
+      >
         <button class="btn"><i class="fas fa-ellipsis-v"></i></button>
         <h5 class="align-self-center"><strong>Chat Head</strong></h5>
         <button class="btn"><i class="fas fa-times"></i></button>
@@ -30,7 +34,10 @@
         <div class="text-success mr-3">Online:</div>
         <div class="d-flex" id="online_users">
           <% users.forEach(user => { %>
-          <div class="p-1 rounded-circle bg-success text-center mr-1" style="height: 35px; width: 35px">
+          <div
+            class="p-1 rounded-circle bg-success text-center mr-1"
+            style="height: 35px; width: 35px"
+          >
             <%= user %>
           </div>
           <% }) %>
@@ -45,86 +52,98 @@
             <i class="fas fa-grin-alt text-success"></i>
           </button>
         </a>
-        <div style="flex-grow: 20;">
-          <input type="text" class="form-control" id="input_message">
+        <div style="flex-grow: 20">
+          <input type="text" class="form-control" id="input_message" />
         </div>
-        <a id="submit" href="" type="button" class="p-2 text-center" style="flex-grow: 1;"><i
-            class="fa fa-paper-plane"></i></a>
+        <a
+          id="submit"
+          href=""
+          type="button"
+          class="p-2 text-center"
+          style="flex-grow: 1"
+          ><i class="fa fa-paper-plane"></i
+        ></a>
       </div>
     </div>
   </div>
-  <h5 class='text-center mt-3'>Logged in User: <%= username %></h5>
+  <h5 class="text-center mt-3">Logged in User: <%= username %></h5>
   <div id="name_hidden" style="visibility: hidden"><%= username %></div>
-  
 </div>
-<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-<script src="/js/video_fullscreen.js">
-</script>
+<script
+  type="module"
+  src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"
+></script>
+<!-- <script src="/js/video_fullscreen.js"></script> -->
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  $(document).ready(function() {
+  $(document).ready(function () {
     var users = "<%= users %>";
-    users = users.split(',');
-    var chats = $('#chat-window');
+    users = users.split(",");
+    var chats = $("#chat-window");
     var socket = io();
-    var lastSenderName = '';
+    var lastSenderName = "";
     var vid = document.getElementById("video_player");
     var iJustPaused = false;
     var iJustPlayed = false;
-    var isBeingPlayedBy = '';
-    var isBeingPausedBy = '';
+    var isBeingPlayedBy = "";
+    var isBeingPausedBy = "";
 
     socket.on("connect", () => {
-      socket.emit('join');
+      socket.emit("join");
       console.log("Connected to the server");
     });
 
-    socket.on("newconnection", (user) => {
-      var online_users = $('#online_users');
-      if(users.findIndex(u => u == user.initials) == -1) {
+    socket.on("newconnection", user => {
+      var online_users = $("#online_users");
+      if (users.findIndex(u => u == user.initials) == -1) {
         online_users.append(`<div class="p-1 rounded-circle bg-success text-center mr-1" style="height: 35px; width: 35px">
             ${user.initials}
           </div>`);
-          users.push(user.initials);
-        }
-        chats.append(`<small class="text-success m-3 d-block">${user.firstName} Joined The chat</small>`);
+        users.push(user.initials);
+      }
+      chats.append(
+        `<small class="text-success m-3 d-block">${user.firstName} Joined The chat</small>`
+      );
     });
 
-    socket.on("user_disconnected", (data) => {
-      let online_users = $('#online_users');
-      chats.append(`<small class="text-danger m-3 d-block">${data.firstName} Left the chat</small>`)
-      if(users.findIndex(u => u == data.initials) != -1){
+    socket.on("user_disconnected", data => {
+      let online_users = $("#online_users");
+      chats.append(
+        `<small class="text-danger m-3 d-block">${data.firstName} Left the chat</small>`
+      );
+      if (users.findIndex(u => u == data.initials) != -1) {
         // console.log(users);
         users = users.filter(u => u != data.initials);
         // console.log(users);
-        online_users.html('');
+        online_users.html("");
         users.forEach(u => {
           online_users.append(`<div class="p-1 rounded-circle bg-success text-center mr-1" style="height: 35px; width: 35px">
           ${u}
         </div>`);
         });
       }
-    })
+    });
 
-    socket.on('let_me_catch_up', (currentTime) => {
+    socket.on("let_me_catch_up", currentTime => {
       vid.currentTime = currentTime;
     });
 
-    socket.on('where_is_everyone', (socket_id) => {
-      socket.emit('there_they_are', {currentTime:vid.currentTime, socket_id: socket_id});
-    })
+    socket.on("where_is_everyone", socket_id => {
+      socket.emit("there_they_are", {
+        currentTime: vid.currentTime,
+        socket_id: socket_id,
+      });
+    });
 
     socket.on("message", data => {
-      if(data.message == 'nai'){
-        chats.text('');
-        lastSenderName = '';
-      }
-      else if(lastSenderName == data.name){
+      if (data.message == "nai") {
+        chats.text("");
+        lastSenderName = "";
+      } else if (lastSenderName == data.name) {
         chats.append(`<div><div class="user-msg border border-primary rounded-bubble p-2 bg-info mb-1 d-inline-block" style="margin-left:60px">
         ${data.message}
       </div></div>`);
-      }
-      else{
+      } else {
         chats.append(`<div id="single-chat" class="d-flex px-3 align-items-start mb-2">
           <div id="user-logo" class="text-center rounded-circle bg-danger p-1 mt-2" style="height: 35px; width: 35px">
             ${data.name[0]}
@@ -138,16 +157,15 @@
         </div>`);
       }
       lastSenderName = data.name;
-    })
+    });
 
-    $.fn.sendMessage = function(){
-      var input = $('#input_message');
-      var name = $('#name_hidden').text();
-      if(input.val() == 'nai'){
-        chats.text('');
-        lastSenderName = '';
-      }
-      else if(lastSenderName == name){
+    $.fn.sendMessage = function () {
+      var input = $("#input_message");
+      var name = $("#name_hidden").text();
+      if (input.val() == "nai") {
+        chats.text("");
+        lastSenderName = "";
+      } else if (lastSenderName == name) {
         chats.append(`<div class="d-flex justify-content-end">
         <div class="user-msg border border-primary rounded-bubble p-2 bg-info mb-1 d-inline-block" style="margin-right:58px">
           ${input.val()}
@@ -164,23 +182,23 @@
           <div id="user-logo" class="text-center rounded-circle bg-danger p-1 mt-2" style="height: 35px; width: 35px">
             ${name[0]}
           </div>
-        </div>`)
+        </div>`);
       }
-      
+
       socket.emit("message", {
         name: name,
         sender_id: "ID",
-        message: input.val()
+        message: input.val(),
       });
       lastSenderName = name;
-      input.val('');
-    }
+      input.val("");
+    };
 
-    $("#submit").on("click",(e) => {
+    $("#submit").on("click", e => {
       e.preventDefault();
       $.fn.sendMessage();
     });
-    $('#input_message').keyup((e) => {
+    $("#input_message").keyup(e => {
       e.preventDefault();
       if (e.keyCode == 13) {
         $.fn.sendMessage();
@@ -188,23 +206,26 @@
     });
 
     // Video Management socket
-    
+
     var isPlaying = false;
 
     vid.onplaying = function () {
       isPlaying = true;
     };
     vid.onplay = function () {
-      if(!iJustPlayed){
-        var name = $('#name_hidden').text();
+      if (!iJustPlayed) {
+        var name = $("#name_hidden").text();
         socket.emit("play", { play_at: vid.currentTime, sender_name: name });
       }
       iJustPlayed = false;
     };
     vid.onpause = function () {
-      if(isPlaying && !iJustPaused){
-        var name = $('#name_hidden').text();
-        socket.emit("paused", { paused_at: vid.currentTime, sender_name:name });
+      if (isPlaying && !iJustPaused) {
+        var name = $("#name_hidden").text();
+        socket.emit("paused", {
+          paused_at: vid.currentTime,
+          sender_name: name,
+        });
         isPlaying = false;
       }
       iJustPaused = false;
@@ -221,7 +242,6 @@
     });
 
     socket.on("paused", async msg => {
-
       vid.currentTime = msg.paused_at;
       if (!vid.paused && isPlaying) {
         iJustPaused = true;
@@ -229,18 +249,17 @@
       }
 
       //Paused by information
-      if(msg.sender_name != isBeingPausedBy){
+      if (msg.sender_name != isBeingPausedBy) {
         isBeingPausedBy = msg.sender_name;
-        isBeingPlayedBy = '';
-        $('#vid_message').html('');
-        disposable_message(msg.sender_name, 'warning');
-        setTimeout(function(){
-          $('#vid_message').html('');
-          isBeingPlayedBy = '';
-          isBeingPausedBy = '';
+        isBeingPlayedBy = "";
+        $("#vid_message").html("");
+        disposable_message(msg.sender_name, "warning");
+        setTimeout(function () {
+          $("#vid_message").html("");
+          isBeingPlayedBy = "";
+          isBeingPausedBy = "";
         }, 10000);
       }
-    
     });
 
     socket.on("play", async msg => {
@@ -248,42 +267,42 @@
       if (vid.paused) {
         vid.play();
 
-        if(msg.sender_name != isBeingPlayedBy){
+        if (msg.sender_name != isBeingPlayedBy) {
           isBeingPlayedBy = msg.sender_name;
-          isBeingPausedBy = '';
-          $('#vid_message').html('');
-          disposable_message(msg.sender_name, 'success');
-          setTimeout(function(){
-            $('#vid_message').html('');
-            isBeingPlayedBy = '';
-            isBeingPausedBy = '';
+          isBeingPausedBy = "";
+          $("#vid_message").html("");
+          disposable_message(msg.sender_name, "success");
+          setTimeout(function () {
+            $("#vid_message").html("");
+            isBeingPlayedBy = "";
+            isBeingPausedBy = "";
           }, 10000);
         }
         iJustPlayed = true;
-      }
-      else {
+      } else {
         iJustPlayed = false;
       }
     });
 
     //Emoji Picker
 
-    let emoji_picker = $('emoji-picker');
+    let emoji_picker = $("emoji-picker");
     emoji_picker.hide();
-    document.querySelector('emoji-picker')
-    .addEventListener('emoji-click', event => {
-      let input = $('#input_message');
-      input.val(input.val() + event.detail.unicode);
-    });
-    $('#emoji_btn').click((e) => {
+    document
+      .querySelector("emoji-picker")
+      .addEventListener("emoji-click", event => {
+        let input = $("#input_message");
+        input.val(input.val() + event.detail.unicode);
+      });
+    $("#emoji_btn").click(e => {
       console.log("hello world");
       e.preventDefault();
       emoji_picker.toggle();
-    })
-  })
+    });
+  });
 
-  function disposable_message(name, alert_type){
-    let disposable_container = $('#vid_message');
+  function disposable_message(name, alert_type) {
+    let disposable_container = $("#vid_message");
     disposable_container.append(`<div class="alert alert-${alert_type} alert-dismissible fade show" role="alert">
       <strong>${name}</strong> is Controlling now!!!
       <button type="button" class="close" data-dismiss="alert" aria-label="Close">
