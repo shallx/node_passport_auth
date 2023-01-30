@@ -1,0 +1,4 @@
+1. Create a folder inside the asset folder
+and keep your videos there
+
+2. Create a db called auth with a collection name "users"
